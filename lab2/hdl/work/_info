@@ -35,7 +35,7 @@ OL;O;2021.3_1;73
 R1
 vadder
 Z3 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
-Z4 !s110 1742808036
+Z4 !s110 1742843240
 !i10b 1
 !s100 T5LIl<D<YGCYI@?Aoe>TJ2
 Z5 !s11b Dg1SIo80bB@j0V0VzS_@n1
@@ -43,7 +43,7 @@ IU2@:GK@CdD9o4GiTRB6EV0
 Z6 VDg1SIo80bB@j0V0VzS_@n1
 S1
 Z7 d/home/morptavius/Documents/GitHub/ecen4243S25/lab2/hdl
-Z8 w1742808028
+Z8 w1742843232
 Z9 8riscv_single.sv
 Z10 Friscv_single.sv
 !i122 0
@@ -52,7 +52,7 @@ Z11 OV;L;2020.1;71
 r1
 !s85 0
 31
-Z12 !s108 1742808036.000000
+Z12 !s108 1742843239.000000
 !s107 riscv_single.sv|
 Z13 !s90 -reportprogress|300|riscv_single.sv|
 !i113 1
@@ -157,9 +157,9 @@ vdmem
 R3
 R4
 !i10b 1
-!s100 ec;QmMS^B93z0j:iU2gP;3
+!s100 Nffh8L^N]Ek;2j6TGUFoc3
 R5
-I[J3l3G4>@Pk=Y0kOAio8_1
+IQ>NF`hiR:[06DW?6=U>mR1
 R6
 S1
 R7
@@ -397,9 +397,9 @@ vtestbench
 R3
 R4
 !i10b 1
-!s100 ]fK0825fEBPg8DR1;::Gm3
+!s100 7[WoN7`>5Z]^Pj<Z[aUag2
 R5
-Ig_3=zZ18KS3TD]NiJ=Mb>1
+I^f20]Rh;3GB81A`QzI40H3
 R6
 S1
 R7

@@ -2,7 +2,7 @@
 # ** Warning: (vdel-134) Unable to remove locked optimized design "_opt".  Locker is jstine@sakuya.ecen.okstate.edu.
 # ** Warning: (vlib-34) Library already exists at "work".
 # Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
-# Start time: 04:20:36 on Mar 24,2025
+# Start time: 14:07:19 on Mar 24,2025
 # vlog -reportprogress 300 riscv_single.sv 
 # -- Compiling module testbench
 # -- Compiling module riscvsingle
@@ -26,10 +26,10 @@
 # 	testbench
 # 	flopenr
 # 	mux2
-# End time: 04:20:36 on Mar 24,2025, Elapsed time: 0:00:00
+# End time: 14:07:20 on Mar 24,2025, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0
 # vsim -debugdb -voptargs="+acc" work.testbench 
-# Start time: 04:20:36 on Mar 24,2025
+# Start time: 14:07:20 on Mar 24,2025
 # Loading sv_std.std
 # Loading work.testbench
 # Loading work.top
@@ -49,13 +49,9 @@
 # ** Note: (vsim-8900) Creating design debug database vsim.dbg.
 # It appears vopt was not run with -debugdb option on this design.
 # Advanced Causality and Schematic debug features will not be available.
-# ** Warning: (vsim-PLI-3407) Too many data words read on line 1025 of file "../riscvtest/test_hw.memfile". (Current address [1024], address range [0:1023])    : riscv_single.sv(46)
-#    Time: 0 ps  Iteration: 0  Instance: /testbench
-# Simulation failed
-# Simulation failed
-# Simulation failed
-# Simulation failed
-# Simulation failed
-# Simulation failed
-# End time: 04:22:41 on Mar 24,2025, Elapsed time: 0:02:05
-# Errors: 0, Warnings: 1
+# Simulation succeeded
+# ** Note: $stop    : riscv_single.sv(68)
+#    Time: 195 ps  Iteration: 1  Instance: /testbench
+# Break in Module testbench at riscv_single.sv line 68
+# End time: 14:10:21 on Mar 24,2025, Elapsed time: 0:03:01
+# Errors: 0, Warnings: 0
