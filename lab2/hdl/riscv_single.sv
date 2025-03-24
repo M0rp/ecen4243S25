@@ -42,7 +42,7 @@ module testbench();
    initial
      begin
 	string memfilename;
-        memfilename = {"../riscvtest/riscvtest.memfile"};
+        memfilename = {"../riscvtest/test_hw.memfile"};
         $readmemh(memfilename, dut.imem.RAM);
      end
 
@@ -87,14 +87,16 @@ module riscvsingle (input  logic        clk, reset,
    logic [2:0]        ImmSrc;
    logic [3:0] 				ALUControl;
    logic [1:0]        PCSrc;
+   logic [2:0]        LoadSrc;
+   logic [1:0]        StoreSrc;
    
    controller c (Instr[6:0], Instr[14:12], Instr[30], Zero, Lt, Ltu,
 		 ResultSrc, MemWrite, PCSrc,
 		 ALUSrc, RegWrite, Jump,
-		 ImmSrc, ALUControl);
+		 ImmSrc, ALUControl, LoadSrc, StoreSrc);
    datapath dp (clk, reset, ResultSrc, PCSrc,
 		ALUSrc, RegWrite,
-		ImmSrc, ALUControl,
+		ImmSrc, ALUControl, LoadSrc, StoreSrc,
 		Zero, Lt, Ltu, PC, Instr,
 		ALUResult, WriteData, ReadData);
    
@@ -112,7 +114,9 @@ module controller (input  logic [6:0] op,
        output logic [1:0] ALUSrc,
 		   output logic       RegWrite, Jump,
 		   output logic [2:0] ImmSrc,
-		   output logic [3:0] ALUControl);
+		   output logic [3:0] ALUControl,
+       output logic [2:0] LoadSrc,
+       output logic [1:0] StoreSrc);
    
    logic [1:0] 			      ALUOp;
    logic 			      Branch;
@@ -125,6 +129,13 @@ module controller (input  logic [6:0] op,
                     ((funct3[2] & ~funct3[1]) & (funct3[0] ^ Lt)) | //blt and bge
                     ((funct3[2] & funct3[1]) & (funct3[0] ^ Ltu)) //bltu and bgeu
                   )) | Jump;
+   
+   assign LoadSrc[2] = (~funct3[2] & funct3[1] & ~funct3[0]);
+   assign LoadSrc[1] = funct3[2];
+   assign LoadSrc[0] = funct3[0];
+
+   assign StoreSrc[1] = funct3[1];
+   assign StoreSrc[0] = funct3[0];
 
    assign PCSrc[1] = (~op[3] & Jump);
 
@@ -204,6 +215,8 @@ module datapath (input  logic        clk, reset,
 		 input  logic 	     RegWrite,
 		 input  logic [2:0]  ImmSrc,
 		 input  logic [3:0]  ALUControl,
+     input  logic [2:0]  LoadSrc,
+     input  logic [1:0]  StoreSrc,
 		 output logic 	     Zero,
      output logic        Lt,
      output logic        Ltu,
@@ -216,22 +229,83 @@ module datapath (input  logic        clk, reset,
    logic [31:0] 		     ImmExt;
    logic [31:0] 		     SrcA, SrcB;
    logic [31:0] 		     Result;
+   logic [31:0]          LoadResult;
+   logic [31:0]          StoreIn;
    
    // next PC logic
    flopr #(32) pcreg (clk, reset, PCNext, PC);
    adder  pcadd4 (PC, 32'd4, PCPlus4);
    adder  pcaddbranch (PC, ImmExt, PCTarget);
    mux3 #(32)  pcmux (PCPlus4, PCTarget, ALUResult, PCSrc, PCNext);
+
    // register file logic
    regfile  rf (clk, RegWrite, Instr[19:15], Instr[24:20],
-	       Instr[11:7], Result, SrcA, WriteData);
+	       Instr[11:7], Result, SrcA, StoreIn);
    extend  ext (Instr[31:7], ImmSrc, ImmExt);
+
    // ALU logic
-   mux3 #(32)  srcbmux (WriteData, ImmExt, PCTarget, ALUSrc, SrcB);
+   mux3 #(32)  srcbmux (StoreIn, ImmExt, PCTarget, ALUSrc, SrcB);
    alu  alu (SrcA, SrcB, ALUControl, ALUResult, Zero, Lt, Ltu);
-   mux3 #(32) resultmux (ALUResult, ReadData, PCPlus4, ResultSrc, Result);
+   mux3 #(32) resultmux (ALUResult, LoadResult, PCPlus4, ResultSrc, Result);
+
+   //Load and Store logic
+   load ld (ALUResult, ReadData, LoadSrc, LoadResult);
+   store st (ReadData, StoreIn, ALUResult, StoreSrc, WriteData);
 
 endmodule // datapath
+
+module load (input  logic [31:0] ALUResult,
+             input  logic [31:0] ReadData,
+             input  logic [2:0]  LoadSrc,
+             output logic [31:0] ld);
+  
+  always_comb
+  case(LoadSrc)
+    3'b000: case(ALUResult[1:0]) //lb
+        2'b00: ld = {{24{ReadData[7]}}, ReadData[7:0]};    //Zero offset
+        2'b01: ld = {{24{ReadData[15]}}, ReadData[15:8]};  //One offset
+        2'b10: ld = {{24{ReadData[23]}}, ReadData[23:16]}; //Two offset
+        3'b11: ld = {{24{ReadData[31]}}, ReadData[31:24]}; //Three offset
+      endcase
+    3'b001: case(ALUResult[1]) //lh
+        1'b0: ld = {{16{ReadData[15]}}, ReadData[15:0]};
+        1'b1: ld = {{16{ReadData[31]}}, ReadData[31:16]};
+      endcase
+    3'b010: case(ALUResult[1:0]) //lbu
+        2'b00: ld = {24'b0, ReadData[7:0]};   //Zero offset
+        2'b01: ld = {24'b0, ReadData[15:8]};  //One offset
+        2'b10: ld = {24'b0, ReadData[23:16]}; //Two offset
+        3'b11: ld = {24'b0, ReadData[31:24]}; //Three offset
+      endcase
+    3'b011: case(ALUResult[1:0]) //lhu
+        1'b0: ld = {16'b0, ReadData[15:0]};
+        1'b1: ld = {16'b0, ReadData[31:16]};
+      endcase
+    default: ld = ReadData; //lw
+  endcase
+
+endmodule
+
+module store (input logic  [31:0] ReadData,
+              input logic  [31:0] StrIn,
+              input logic  [31:0] ALUResult,
+              input logic  [1:0]  StoreSrc,
+              output logic [31:0] WriteData);
+  always_comb
+  case(StoreSrc)
+    2'b00: case(ALUResult[1:0])
+        2'b00: WriteData = {ReadData[31:8], StrIn[7:0]};
+        2'b01: WriteData = {ReadData[31:16], StrIn[7:0], ReadData[7:0]};
+        2'b10: WriteData = {ReadData[31:24], StrIn[7:0], ReadData[15:0]};
+        2'b11: WriteData = {StrIn[7:0], ReadData[23:0]};
+      endcase
+    2'b01: case(ALUResult[1])
+        1'b0: WriteData = {ReadData[31:16], StrIn[15:0]};
+        1'b1: WriteData = {StrIn[15:0], ReadData[15:0]};
+      endcase
+    default: WriteData = StrIn;
+  endcase
+endmodule
 
 module adder (input  logic [31:0] a, b,
 	      output logic [31:0] y);
@@ -328,7 +402,7 @@ module dmem (input  logic        clk, we,
 	     input  logic [31:0] a, wd,
 	     output logic [31:0] rd);
    
-   logic [31:0] 		 RAM[255:0];
+   logic [31:0] 		 RAM[8191:0];
    
    assign rd = RAM[a[31:2]]; // word aligned
    always_ff @(posedge clk)
