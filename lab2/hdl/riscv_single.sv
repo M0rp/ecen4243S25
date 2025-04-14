@@ -120,6 +120,7 @@ module controller (input  logic [6:0] op,
    
    logic [1:0] 			      ALUOp;
    logic 			      Branch;
+   logic BranchTaken; 
    
    maindec md (op, ResultSrc, MemWrite, Branch,
 	       ALUSrc, RegWrite, Jump, ImmSrc, ALUOp);
@@ -130,6 +131,15 @@ module controller (input  logic [6:0] op,
                     ((funct3[2] & funct3[1]) & (funct3[0] ^ Ltu)) //bltu and bgeu
                   )) | Jump;
    
+   always_comb begin
+    case(funct3):
+      3'b000: BranchTaken = Zero;
+      3'b001: BranchTaken = ~Zero;
+
+      default: BranchTaken = 1'b0;
+    endcase
+   end
+
    assign LoadSrc[2] = (~funct3[2] & funct3[1] & ~funct3[0]);
    assign LoadSrc[1] = funct3[2];
    assign LoadSrc[0] = funct3[0];

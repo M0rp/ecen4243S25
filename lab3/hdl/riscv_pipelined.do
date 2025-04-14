@@ -82,10 +82,7 @@ configure wave -rowmargin 4
 configure wave -childrowmargin 2
 
 -- Run the Simulation
-run 300 ns
-
--- Add schematic
-add schematic -full sim:/testbench/dut/rv32pipe
+run 500 ns
 
 -- Save memory for checking (if needed)
 # mem save -outfile memory.dat -wordsperline 1 /testbench/dut/dmem/RAM
